@@ -2,8 +2,11 @@ export const GITHUB_WORKFLOW_YML = `name: Build & Release Windows App
 
 on:
   push:
+    branches:
+      - main
+      - master
     tags:
-      - 'v*' # Triggers when you push a tag like v1.0.0
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag_name:
@@ -14,6 +17,11 @@ on:
         description: 'Release Title'
         required: false
         default: 'WinGemini Windows Release'
+      publish_release:
+        description: 'Publish to Releases tab'
+        required: false
+        type: boolean
+        default: true
       draft:
         description: 'Create as Draft Release'
         required: false
@@ -47,7 +55,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web Application
         run: npm run build
@@ -81,7 +89,8 @@ jobs:
     name: Publish to GitHub Releases Tab
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    # Runs whenever a version tag is pushed OR when triggered manually via workflow_dispatch
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_release != false)
 
     steps:
       - name: Checkout repository
@@ -102,7 +111,7 @@ jobs:
           cat SHA256SUMS.txt >> \${GITHUB_STEP_SUMMARY}
           echo "\`\`\`" >> \${GITHUB_STEP_SUMMARY}
 
-      - name: Determine Release Tag
+      - name: Determine Release Tag & Title
         id: release_info
         run: |
           if [ "\${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -147,8 +156,12 @@ jobs:
 
 export const GITHUB_WORKFLOW_EXPLANATION = [
   {
+    title: 'Triggers on Push & Tags Automatically',
+    desc: 'Now triggers on every push to `main` / `master` so the build starts immediately upon git push, and runs the release job when pushing a `v*` tag or using the manual trigger.',
+  },
+  {
     title: 'Separated Dual-Job Architecture',
-    desc: 'The workflow has two distinct jobs: `build` (runs on a Windows runner to compile the native Electron binaries) and `release` (triggered upon build completion to publish the artifacts to your GitHub Releases tab).',
+    desc: 'The workflow has two distinct jobs: `build` (runs on a Windows runner to compile the native Electron binaries) and `release` (runs upon build completion to publish the artifacts to your GitHub Releases tab).',
   },
   {
     title: 'Produces Both .EXE (Installer & Portable) and .ZIP',
@@ -157,9 +170,5 @@ export const GITHUB_WORKFLOW_EXPLANATION = [
   {
     title: 'Automatic Release Tab Publishing',
     desc: 'The release job downloads the uploaded artifacts from the build job, computes cryptographic SHA256 checksums for security, and attaches all files directly to your GitHub repository Releases tab with auto-generated release notes.',
-  },
-  {
-    title: 'Dual Trigger Support',
-    desc: 'Trigger automatically whenever you push a Git tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`), OR manually at any time by clicking "Run workflow" in your repository\'s Actions tab.',
   },
 ];
