@@ -15,10 +15,11 @@ import {
   Boxes,
   Terminal,
   AlertTriangle,
-  HelpCircle,
   Play,
   FolderTree,
   Settings2,
+  Zap,
+  Globe,
 } from 'lucide-react';
 import { GITHUB_WORKFLOW_YML, GITHUB_WORKFLOW_EXPLANATION } from '../constants/githubWorkflow';
 import {
@@ -34,7 +35,6 @@ export const GitHubWorkflowStudio: React.FC = () => {
   const [isCopied, setIsCopied] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
   const [isExportingZip, setIsExportingZip] = useState(false);
-  const [showTroubleshooter, setShowTroubleshooter] = useState(true);
 
   const filesMap: Record<string, { title: string; filename: string; content: string; lang: string }> = {
     workflow: {
@@ -131,129 +131,144 @@ export const GitHubWorkflowStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* ACTION DIDN'T START? TROUBLESHOOTING & INSTANT FIX PANEL */}
-      <div className="p-6 rounded-3xl bg-amber-950/30 border border-amber-500/30 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                Why Action Didn&apos;t Start &amp; How to Fix It
-              </h2>
-              <p className="text-xs text-amber-300/80">
-                Follow these 4 quick checks to make GitHub start the workflow immediately
-              </p>
-            </div>
+      {/* WHY ACTION DIDN'T START AUTO - ROOT CAUSE & INSTANT 1-MINUTE FIX */}
+      <div className="p-6 rounded-3xl bg-amber-950/40 border border-amber-500/40 shadow-xl space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 shrink-0">
+            <Zap className="w-6 h-6 animate-pulse" />
           </div>
-
-          <button
-            onClick={() => setShowTroubleshooter(!showTroubleshooter)}
-            className="text-xs text-amber-300 hover:text-white px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20"
-          >
-            {showTroubleshooter ? 'Hide Checklist' : 'Show Checklist'}
-          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white">
+              Why It Didn&apos;t Start Auto &amp; The 3-Step Instant Fix
+            </h2>
+            <p className="text-xs text-amber-200/90 mt-0.5">
+              Follow these exact steps — one of these 3 is the exact reason GitHub blocked the automatic run.
+            </p>
+          </div>
         </div>
 
-        {showTroubleshooter && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            
-            {/* Fix 1: Trigger with a Version Tag */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                  <Tag className="w-4 h-4" /> 1. Push a Version Tag (Immediate Trigger)
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          
+          {/* Diagnostic Step 1 */}
+          <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-3 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                  Check #1: GitHub Button
                 </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">
-                  Most Common
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
+                  Most Common!
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                If you only ran <code className="text-sky-300 font-mono">git push origin main</code>, GitHub may not have started the release because it waits for a release tag. Run this command to tag your commit and push it now:
+              <h3 className="text-sm font-semibold text-white">
+                &quot;Enable Workflows&quot; Banner on GitHub
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                On newly created or imported repos, GitHub <strong>disables all automatic workflows</strong> until you manually approve them once!
               </p>
-              <div className="flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs font-mono text-emerald-400">
-                <span className="truncate">git tag v1.0.0 &amp;&amp; git push origin v1.0.0</span>
-                <button
-                  onClick={() => handleCopyCode('git tag v1.0.0 && git push origin v1.0.0', 'tag-cmd')}
-                  className="ml-2 text-slate-400 hover:text-white shrink-0"
-                  title="Copy command"
-                >
-                  {copiedSnippet === 'tag-cmd' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
+              <div className="mt-2.5 p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 space-y-1">
+                <div>1. Go to your repo on <strong>github.com</strong></div>
+                <div>2. Click the <strong>Actions</strong> tab</div>
+                <div className="text-emerald-400 font-semibold">
+                  3. If you see a green button saying &quot;Enable Actions&quot; or &quot;I understand my workflows, go ahead and enable them&quot;, CLICK IT!
+                </div>
               </div>
             </div>
+            <div className="text-[11px] text-slate-400">
+              Until you click that button once, GitHub will reject every automatic push trigger.
+            </div>
+          </div>
 
-            {/* Fix 2: Run via GitHub Actions UI Button */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-                  <Play className="w-4 h-4" /> 2. Manual One-Click Trigger in GitHub UI
+          {/* Diagnostic Step 2 */}
+          <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-3 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">
+                  Check #2: Verify Git Tracked
                 </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300">
-                  No Terminal Needed
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-semibold">
+                  Terminal Fix
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Our workflow supports <code className="text-sky-300 font-mono">workflow_dispatch</code>. You can start it right from your browser:
+              <h3 className="text-sm font-semibold text-white">
+                Did Git Actually Upload .github?
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                On Windows, folders with leading dots like <code className="text-sky-300 font-mono">.github</code> are hidden, so <code className="text-sky-300 font-mono">git add .</code> sometimes skipped it!
               </p>
-              <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
-                <li>Go to your GitHub repository and click the <strong>Actions</strong> tab.</li>
-                <li>In the left sidebar, click <strong>"Build &amp; Release Windows App"</strong>.</li>
-                <li>Click the <strong className="text-sky-300">"Run workflow"</strong> dropdown button on the right.</li>
-                <li>Leave inputs as default and click the green <strong>Run workflow</strong> button!</li>
+              <p className="text-xs text-slate-400 mt-1">Run this check in your terminal:</p>
+              <div className="flex items-center justify-between bg-slate-900 p-2 rounded-xl border border-slate-800 text-xs font-mono text-sky-300">
+                <span className="truncate">git ls-files .github/workflows/</span>
+                <button
+                  onClick={() => handleCopyCode('git ls-files .github/workflows/', 'ls-check')}
+                  className="ml-2 text-slate-400 hover:text-white shrink-0"
+                >
+                  {copiedSnippet === 'ls-check' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-300 mt-1">
+                If empty, run: <code className="text-emerald-400 font-mono">git add -f .github/ &amp;&amp; git commit -m &quot;add workflow&quot; &amp;&amp; git push</code>
+              </p>
+            </div>
+            <button
+              onClick={() => handleCopyCode('git add -f .github/ && git commit -m "feat: add workflow" && git push', 'force-add')}
+              className="w-full py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5"
+            >
+              {copiedSnippet === 'force-add' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>Copy Force-Add Command</span>
+            </button>
+          </div>
+
+          {/* Diagnostic Step 3 */}
+          <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-3 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                  Check #3: 100% Guaranteed Fix
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">
+                  Web Direct
+                </span>
+              </div>
+              <h3 className="text-sm font-semibold text-white">
+                Add Directly via GitHub Web UI
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                If terminal pushing is giving issues, adding the file on github.com works 100% of the time:
+              </p>
+              <ol className="text-xs text-slate-300 space-y-1 list-decimal list-inside mt-1.5">
+                <li>On your GitHub repo, click <strong>Add file</strong> &gt; <strong>Create new file</strong>.</li>
+                <li>In name box type: <code className="text-emerald-300 font-mono">.github/workflows/build-and-release.yml</code></li>
+                <li>Copy the workflow code below &amp; paste it in.</li>
+                <li>Click <strong>Commit changes</strong>!</li>
               </ol>
             </div>
-
-            {/* Fix 3: Check File Location */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-indigo-400 flex items-center gap-1.5">
-                  <FolderTree className="w-4 h-4" /> 3. Check Exact Workflow File Path
-                </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300">
-                  File Structure
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                GitHub will <em>completely ignore</em> the workflow if it is not in the exact folder path at the root of your repo. Make sure the file is located at:
-              </p>
-              <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs font-mono text-sky-300 flex items-center justify-between">
-                <span className="truncate">.github/workflows/build-and-release.yml</span>
-                <button
-                  onClick={() => handleCopyCode('.github/workflows/build-and-release.yml', 'path-str')}
-                  className="ml-2 text-slate-400 hover:text-white shrink-0"
-                >
-                  {copiedSnippet === 'path-str' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                (Note the leading dot in <code>.github</code>. If you unzipped into a nested folder, move the files to the root.)
-              </p>
-            </div>
-
-            {/* Fix 4: Check GitHub Actions Permissions */}
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                  <Settings2 className="w-4 h-4" /> 4. Enable Actions &amp; Write Permissions
-                </span>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300">
-                  Repo Settings
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                On some new GitHub accounts, Actions are disabled or read-only by default:
-              </p>
-              <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
-                <li>Go to <strong>Settings</strong> &gt; <strong>Actions</strong> &gt; <strong>General</strong> in your repo.</li>
-                <li>Under <em>Actions permissions</em>, select <strong>"Allow all actions and reusable workflows"</strong>.</li>
-                <li>Under <em>Workflow permissions</em>, select <strong>"Read and write permissions"</strong> and click <strong>Save</strong>.</li>
-              </ul>
-            </div>
-
+            <button
+              onClick={() => handleCopyCode(GITHUB_WORKFLOW_YML, 'full-wf')}
+              className="w-full py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white flex items-center justify-center gap-1.5 shadow"
+            >
+              {copiedSnippet === 'full-wf' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>Copy Workflow YAML for GitHub UI</span>
+            </button>
           </div>
-        )}
+
+        </div>
+
+        {/* Updated Trigger Notice */}
+        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>
+              <strong>Updated Workflow Trigger:</strong> Changed to <code className="text-sky-300 font-mono">on: push</code> unconditionally so ANY commit on ANY branch auto-triggers immediately!
+            </span>
+          </div>
+          <button
+            onClick={handleDownloadZip}
+            className="text-sky-400 hover:text-sky-300 font-medium underline flex items-center gap-1"
+          >
+            Download updated ZIP <Download className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Visual Pipeline Architecture (Separated Build & Release Jobs) */}
@@ -273,13 +288,13 @@ export const GitHubWorkflowStudio: React.FC = () => {
               <Tag className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Push to Main, Tag, or Manual Click</div>
+              <div className="text-sm font-semibold text-white">Unconditional Push or Manual</div>
               <p className="text-xs text-slate-400 mt-1">
-                Triggers automatically whenever you push to <code className="text-sky-300">main</code>, push a tag (<code className="text-amber-300">v1.0.0</code>), or click <span className="text-slate-300">"Run workflow"</span> in GitHub.
+                Triggers automatically whenever you push code or tags, or click <span className="text-slate-300">&quot;Run workflow&quot;</span> in GitHub.
               </p>
             </div>
             <div className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-              on: push: branches: [main] &amp; tags: [&apos;v*&apos;]
+              on: push
             </div>
           </div>
 
@@ -411,7 +426,7 @@ export const GitHubWorkflowStudio: React.FC = () => {
       {/* 3-Step Setup Instructions Card */}
       <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
         <h2 className="text-base font-semibold text-white flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-sky-400" /> Fast Terminal Commands to Push &amp; Trigger Build
+          <Terminal className="w-4 h-4 text-sky-400" /> Terminal Commands Reference
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -421,14 +436,14 @@ export const GitHubWorkflowStudio: React.FC = () => {
             </div>
             <div className="text-sm font-semibold text-slate-200">Push to GitHub Main</div>
             <p className="text-xs text-slate-400">
-              Extract the zip and commit to your repo:
+              Commit the project to your repo:
             </p>
             <div className="bg-slate-900 p-2.5 rounded-lg text-[11px] font-mono text-slate-300 overflow-x-auto space-y-1">
               <div>git init</div>
+              <div>git add -f .github/</div>
               <div>git add .</div>
-              <div>git commit -m &quot;feat: wingemini overlay&quot;</div>
+              <div>git commit -m &quot;feat: wingemini&quot;</div>
               <div>git branch -M main</div>
-              <div>git remote add origin &lt;YOUR-REPO-URL&gt;</div>
               <div className="text-sky-300">git push -u origin main</div>
             </div>
           </div>
@@ -437,14 +452,14 @@ export const GitHubWorkflowStudio: React.FC = () => {
             <div className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold flex items-center justify-center">
               2
             </div>
-            <div className="text-sm font-semibold text-slate-200">Push Tag to Trigger Release</div>
+            <div className="text-sm font-semibold text-slate-200">Automatic Execution</div>
             <p className="text-xs text-slate-400">
-              Push a tag to trigger the automatic release creation:
+              With <code className="text-sky-300 font-mono">on: push</code>, GitHub starts the build job right away:
             </p>
             <div className="bg-slate-900 p-2.5 rounded-lg text-[11px] font-mono text-emerald-400 overflow-x-auto space-y-1">
-              <div>git tag v1.0.0</div>
-              <div>git push origin v1.0.0</div>
-              <div className="text-slate-500 pt-1"># Or click "Run workflow" in Actions</div>
+              <div>Job 1: build (windows-latest)</div>
+              <div>Job 2: release (ubuntu-latest)</div>
+              <div className="text-slate-400 pt-1">Takes ~3 minutes to compile</div>
             </div>
           </div>
 

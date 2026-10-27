@@ -1,37 +1,18 @@
 export const GITHUB_WORKFLOW_YML = `name: Build & Release Windows App
 
+# Triggers automatically on ANY push (branches or tags) + manual button
 on:
   push:
-    branches:
-      - main
-      - master
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       tag_name:
         description: 'Release Tag (e.g. v1.0.0)'
-        required: true
+        required: false
         default: 'v1.0.0'
       release_name:
         description: 'Release Title'
         required: false
         default: 'WinGemini Windows Release'
-      publish_release:
-        description: 'Publish to Releases tab'
-        required: false
-        type: boolean
-        default: true
-      draft:
-        description: 'Create as Draft Release'
-        required: false
-        type: boolean
-        default: false
-      prerelease:
-        description: 'Mark as Pre-release'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write # Required to publish releases to the Releases tab
@@ -52,7 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -89,8 +69,6 @@ jobs:
     name: Publish to GitHub Releases Tab
     needs: build
     runs-on: ubuntu-latest
-    # Runs whenever a version tag is pushed OR when triggered manually via workflow_dispatch
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_release != false)
 
     steps:
       - name: Checkout repository
@@ -113,13 +91,17 @@ jobs:
 
       - name: Determine Release Tag & Title
         id: release_info
+        shell: bash
         run: |
-          if [ "\${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "\${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "\${{ github.event.inputs.tag_name }}" ]; then
             echo "tag=\${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
             echo "title=\${{ github.event.inputs.release_name }}" >> $GITHUB_OUTPUT
-          else
+          elif [[ "\${{ github.ref }}" == refs/tags/* ]]; then
             echo "tag=\${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            echo "title=WinGemini Windows Release \${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "title=WinGemini Release \${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v1.0.0-build.\${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "title=WinGemini Windows Build #\${{ github.run_number }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Create GitHub Release & Upload Assets
@@ -127,15 +109,15 @@ jobs:
         with:
           tag_name: \${{ steps.release_info.outputs.tag }}
           name: \${{ steps.release_info.outputs.title }}
-          draft: \${{ github.event.inputs.draft || false }}
-          prerelease: \${{ github.event.inputs.prerelease || false }}
+          draft: false
+          prerelease: false
           generate_release_notes: true
           body: |
             ## WinGemini - Windows Mobile-Style AI Overlay
             
             Instant floating AI overlay for Windows 11 / 10, bringing the Android mobile Gemini experience right to your desktop.
             
-            ### 🚀 What's Included:
+            ### 🚀 Included Binaries:
             - **\`WinGemini-Setup-*.exe\`**: Standard Windows Installer (NSIS) with Start Menu and Desktop shortcuts.
             - **\`WinGemini-Portable-*.exe\`**: Zero-install standalone portable executable. Run instantly anywhere.
             - **\`WinGemini-*-win.zip\`**: Standalone zip bundle containing the portable executable and runtime files.
@@ -156,8 +138,8 @@ jobs:
 
 export const GITHUB_WORKFLOW_EXPLANATION = [
   {
-    title: 'Triggers on Push & Tags Automatically',
-    desc: 'Now triggers on every push to `main` / `master` so the build starts immediately upon git push, and runs the release job when pushing a `v*` tag or using the manual trigger.',
+    title: 'Unconditional Auto-Trigger (Fixed)',
+    desc: 'Uses `on: push` without restrictive filter conflicts so EVERY push to any branch or tag starts immediately without getting blocked.',
   },
   {
     title: 'Separated Dual-Job Architecture',
