@@ -1,0 +1,6 @@
+{
+  "name": "WinGemini - Windows Mobile-Style AI Overlay",
+  "description": "Windows floating Gemini overlay inspired by Android mobile assistant with customizable hotkey, screen context vision, multi-AI API settings (Gemini, OpenRouter, OpenAI), and turnkey GitHub Actions CI/CD to build and release Windows .exe and .zip.",
+  "requestFramePermissions": ["display-capture", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,165 @@
+export const GITHUB_WORKFLOW_YML = `name: Build & Release Windows App
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers when you push a tag like v1.0.0
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      release_name:
+        description: 'Release Title'
+        required: false
+        default: 'WinGemini Windows Release'
+      draft:
+        description: 'Create as Draft Release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as Pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # Required to publish releases to the Releases tab
+
+jobs:
+  # =========================================================================
+  # JOB 1: BUILD & PACKAGE WINDOWS BINARIES (.EXE & .ZIP)
+  # =========================================================================
+  build:
+    name: Build Windows EXE & ZIP
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Package Windows Installer & Portable ZIP via electron-builder
+        env:
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx electron-builder --win --x64 -c.win.target=nsis,portable,zip
+
+      - name: List built binaries
+        shell: bash
+        run: |
+          echo "=== Built Binaries in ./dist_electron ==="
+          ls -lh dist_electron/
+
+      - name: Upload Windows Binaries as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: |
+            dist_electron/*.exe
+            dist_electron/*.zip
+            dist_electron/latest.yml
+          retention-days: 14
+
+  # =========================================================================
+  # JOB 2: PUBLISH TO GITHUB RELEASES TAB (SEPARATED JOB IN SAME WORKFLOW)
+  # =========================================================================
+  release:
+    name: Publish to GitHub Releases Tab
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts from Build Job
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: ./release-assets
+
+      - name: Generate Checksums (SHA256)
+        run: |
+          cd ./release-assets
+          sha256sum *.exe *.zip > SHA256SUMS.txt
+          echo "### Release Assets & Checksums" >> \${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> \${GITHUB_STEP_SUMMARY}
+          cat SHA256SUMS.txt >> \${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> \${GITHUB_STEP_SUMMARY}
+
+      - name: Determine Release Tag
+        id: release_info
+        run: |
+          if [ "\${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=\${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            echo "title=\${{ github.event.inputs.release_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=\${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "title=WinGemini Windows Release \${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release & Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: \${{ steps.release_info.outputs.tag }}
+          name: \${{ steps.release_info.outputs.title }}
+          draft: \${{ github.event.inputs.draft || false }}
+          prerelease: \${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+          body: |
+            ## WinGemini - Windows Mobile-Style AI Overlay
+            
+            Instant floating AI overlay for Windows 11 / 10, bringing the Android mobile Gemini experience right to your desktop.
+            
+            ### 🚀 What's Included:
+            - **\`WinGemini-Setup-*.exe\`**: Standard Windows Installer (NSIS) with Start Menu and Desktop shortcuts.
+            - **\`WinGemini-Portable-*.exe\`**: Zero-install standalone portable executable. Run instantly anywhere.
+            - **\`WinGemini-*-win.zip\`**: Standalone zip bundle containing the portable executable and runtime files.
+            - **\`SHA256SUMS.txt\`**: Cryptographic verification checksums.
+            
+            ### ⚡ Features:
+            - **Global Hotkey**: Press \`Alt + Space\` (or your configured shortcut) anywhere in Windows.
+            - **Screen Vision**: "Ask about this screen" takes instant desktop screenshots and analyzes them with Gemini or OpenRouter.
+            - **Multi-Model Support**: Google Gemini 3.8/4, OpenRouter (DeepSeek R1, Claude 3.5 Sonnet, GPT-4o), Groq, or custom endpoints.
+            - **System Tray Integration**: Background daemon with quick settings & minimize-to-pill.
+          files: |
+            ./release-assets/*.exe
+            ./release-assets/*.zip
+            ./release-assets/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+`;
+
+export const GITHUB_WORKFLOW_EXPLANATION = [
+  {
+    title: 'Separated Dual-Job Architecture',
+    desc: 'The workflow has two distinct jobs: `build` (runs on a Windows runner to compile the native Electron binaries) and `release` (triggered upon build completion to publish the artifacts to your GitHub Releases tab).',
+  },
+  {
+    title: 'Produces Both .EXE (Installer & Portable) and .ZIP',
+    desc: 'Using `electron-builder`, it automatically builds an NSIS Windows installer (.exe), a standalone zero-install portable executable (.exe), and a compressed .zip archive in a single pass.',
+  },
+  {
+    title: 'Automatic Release Tab Publishing',
+    desc: 'The release job downloads the uploaded artifacts from the build job, computes cryptographic SHA256 checksums for security, and attaches all files directly to your GitHub repository Releases tab with auto-generated release notes.',
+  },
+  {
+    title: 'Dual Trigger Support',
+    desc: 'Trigger automatically whenever you push a Git tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`), OR manually at any time by clicking "Run workflow" in your repository\'s Actions tab.',
+  },
+];
